@@ -9,6 +9,7 @@
 require "ruby/openai"
 
 # Ex:
+#   ChatGPT.log_to_default_filepath
 #   ChatGPT.complete_code('Given a string argument in OCaml, return the string in reverse. Account for the null case.')
 class ChatGPT
   class << self
@@ -16,8 +17,12 @@ class ChatGPT
     @@client = nil
     @@log_file_path = ''
 
-    def log_file_path=(path)
-      @@log_file_path = path
+    def log_to_default_filepath
+      @@log_file_path = './log.txt'
+    end
+
+    def chat(prompt)
+      generate(prompt, model: 'text-davinci-003')
     end
 
     def generate_code(prompt)
@@ -40,10 +45,6 @@ class ChatGPT
 
     def generate(prompt, model: 'text-davinci-003')
       with_api_configured do
-        # openai_models = @@client.models.list.parsed_response['data'].map { |model| model['id']}
-
-        # raise 'invalid model' if openai_models & [model] == []
-
         response = @@client.completions(
           parameters: {
             model: model,
@@ -54,8 +55,9 @@ class ChatGPT
         output = response["choices"].map { |c| c["text"] }.join('')
 
         File.write(
-          log_file_path,
-          "#{prompt}\n\n#{output}\n\n", mode: 'a'
+          @@log_file_path,
+          "\n#{prompt}\n\n#{output}\n",
+          mode: 'a'
         ) if @@log_file_path != '' && @@log_file_path.is_a?(String)
 
         output
@@ -70,6 +72,14 @@ class ChatGPT
       @@client = OpenAI::Client.new
 
       yield
+    end
+
+    def validate_model
+      # You'll get rate limited running this extra API request on the current system
+      # Option to copy the contents of `openai_models` into a frozen array in the interim
+
+      # openai_models = @@client.models.list.parsed_response['data'].map { |model| model['id']}
+      # raise 'invalid model' if openai_models & [model] == []
     end
 
     # doc, for embedding the documents to be retrieved, and query, for embedding the search query
@@ -91,3 +101,6 @@ class ChatGPT
     SEMANTIC_SIMILARITY_MODELS = %w[text-similarity-ada-001 text-similarity-babbage-001 text-similarity-curie-001 text-similarity-davinci-001]
   end
 end
+
+ChatGPT.log_to_default_filepath
+ChatGPT.chat('How would you run micro-services in C++? Specifically, what libraries exist for this, and what third-party tools from companies such as Azure or DigitalOcean exist which can serve this function?')
