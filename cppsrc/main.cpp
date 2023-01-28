@@ -3,17 +3,50 @@
 #include <cpr/cpr.h>
 #include "json/json.h"
 
-// Call AWS Transcribe API to record transcripts from given mp4
-std::string transcribeVideo(std::string url)
+#include "mail.hpp"
+#include "interface/openai.hpp"
+
+void executeResults(Json::Value &json)
 {
+  for (const auto followup : json["followups"])
+    switch (followup.substr(0, s.find(' '))) // 1st word in the string
+    {
+    case "email":
+      Mail.send(followup);
+      break;
+    default:
+      break;
+    }
+}
 
-  cpr::Authentication auth(getenv("AWS_TRANSCRIBE_AUTH_KEY"), getenv("AWS_TRANSCRIBE_AUTH_SECRET"));
-  std::string endpoint = "https://aws.endpoint.com/transcribe";
+// Call AWS Transcribe API to record transcripts from given mp4
+std::string transcribeVideo(std::string &url)
+{
+  Poco::Net::HTTPCredentials auth(std::getenv("AWS_TRANSCRIBE_AUTH_KEY"), std::getenv("AWS_TRANSCRIBE_AUTH_SECRET"));
 
-  auto r = cpr::Post(cpr::Url{endpoint}, auth,
-                     cpr::Body{"{\"videoUrl\": \"" + url + "\"}"});
+  const std::string endpoint = "https://aws.endpoint.com/transcribe";
+  Poco::URI uri(endpoint + url);
 
-  return r.text;
+  Poco::Net::HTTPClientSession session(
+      uri.getHost(),
+      uri.getPort());
+  Poco::Net::HTTPRequest request(
+      Poco::Net::HTTPRequest::HTTP_POST,
+      uri.getPathAndQuery(),
+      Poco::Net::HTTPMessage::HTTP_1_1);
+
+  request.setContentType("application/json");
+  request.setCredentials(auth);
+
+  std::ostream &request_stream = session.sendRequest(request);
+  request_stream << "{\"video_url\": \"" + url + "\"}";
+  Poco::Net::HTTPResponse response;
+  std::istream &response_stream = session.receiveResponse(response);
+
+  std::string response_text;
+  Poco::StreamCopier::copyToString(response_stream, response_text);
+
+  return response_text;
 }
 
 // Transform string into input for OpenAI
@@ -41,15 +74,7 @@ std::string generateModifiedString(std::string_view &transcription)
 // Send the transformed input to OpenAI
 std::string_view callOpenAiApi(std::string_view &transcription)
 {
-  const std::string api_key{std::getenv("OPENAI_API_KEY")};
-  const std::string organization_id{std::getenv("OPENAI_ORGANIZATION_ID")};
-
-  auto r = cpr::Get(
-      cpr::Url{("https://api.openai.com/v1/engines/davinci/completions?text=" + transcription)},
-      cpr::Header{{"Authorization", "Bearer " + api_key},
-                  {"OpenAI-Client-Organization", organization_id}});
-
-  return r.text;
+  return OpenAI.get(transcription);
 }
 
 std::string_view run(std::string_view &url)
