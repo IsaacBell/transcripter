@@ -29,7 +29,7 @@ You will need these env vars set:
 
 ## USAGE
 
-Just use `irb`
+The `ChatGPT` class will now be available to you in irb:
 
 ```
 $ irb
