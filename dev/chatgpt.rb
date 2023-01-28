@@ -8,8 +8,8 @@
 
 require "ruby/openai"
 
-# ai = ChatGPT.new
-# ai.generate_code('const helloWorld = () => {', log_file_path: true)
+# Ex:
+#   ChatGPT.complete_code('Given a string argument in OCaml, return the string in reverse. Account for the null case.')
 class ChatGPT
   class << self
     protected :new
@@ -86,5 +86,3 @@ class ChatGPT
     SEMANTIC_SIMILARITY_MODELS = %w[text-similarity-ada-001 text-similarity-babbage-001 text-similarity-curie-001 text-similarity-davinci-001]
   end
 end
-
-p ChatGPT.complete_code('Given a link to a screen recording clip as an argument, obtain captions of the audio. Use any language')
