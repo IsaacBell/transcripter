@@ -35,8 +35,8 @@ The `ChatGPT` class will now be available to you in irb:
 $ irb
 rb(main):001:0> ChatGPT
 => ChatGPT
-irb(main):002:0> ChatGPT.generate_code('write a hello world fn in rust')
-=> "\n\nfn hello_world() {\n    println!(\"Hello World!\");\n}"
+irb(main):002:0> ChatGPT.generate_code('write pseudocode for a hello world function')
+=> "hello_world() { println!(\"Hello World!\"); }"
 
 ```
 
