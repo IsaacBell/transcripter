@@ -14,26 +14,31 @@ class ChatGPT
   class << self
     protected :new
     @@client = nil
+    @@log_file_path = ''
 
-    def generate_code(prompt, log_file_path: '')
-      generate(prompt, model: 'text-davinci-003', log_file_path: log_file_path)
+    def log_file_path=(path)
+      @@log_file_path = path
     end
 
-    def generate_code_alt(prompt, log_file_path: '')
-      generate(prompt, model: 'code-cushman-001', log_file_path: log_file_path)
+    def generate_code(prompt)
+      generate(prompt, model: 'text-davinci-003')
     end
 
-    def complete_code(prompt, log_file_path: '')
-      generate(prompt, model: 'code-davinci-003', log_file_path: log_file_path)
+    def generate_code_alt(prompt)
+      generate(prompt, model: 'code-cushman-001')
     end
 
-    def translate_text(target_lang, prompt, log_file_path)
-      generate("Translate to #{target_lang}:\n#{prompt}", model: 'text-ada-001', log_file_path: log_file_path)
+    def complete_code(prompt)
+      generate(prompt, model: 'code-davinci-003')
+    end
+
+    def translate_text(target_lang, prompt)
+      generate("Translate to #{target_lang}:\n#{prompt}", model: 'text-ada-001')
     end
 
     protected
 
-    def generate(prompt, model: 'text-davinci-003', log_file_path: '')
+    def generate(prompt, model: 'text-davinci-003')
       with_api_configured do
         # openai_models = @@client.models.list.parsed_response['data'].map { |model| model['id']}
 
@@ -51,7 +56,7 @@ class ChatGPT
         File.write(
           log_file_path,
           "#{prompt}\n\n#{output}\n\n", mode: 'a'
-        ) if log_file_path != nil && log_file_path != '' && log_file_path.is_a?(String)
+        ) if @@log_file_path != '' && @@log_file_path.is_a?(String)
 
         output
       end
