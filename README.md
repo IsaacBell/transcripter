@@ -1,6 +1,6 @@
 # Important Note
 
-Some of you readers are only here for to check out the C++ app I'm building. Others are here to see how I utilise(d) AI on this project. If that's you, skip ahead to "ChatGPT" (but check out the other app to see how I actually use ChatGPT in the field, because this C++ code is nuts.)
+Some of you readers are only here for to check out the C++ app I'm building. Others are here to see how I utilise(d) AI on this project. If that's you, skip ahead to "ChatGPT" (but check out the other app to see how I actually use ChatGPT in the field, because, for the unfamiliar, this code is incredibly impressive for C++)
 
 # Transcripter
 
