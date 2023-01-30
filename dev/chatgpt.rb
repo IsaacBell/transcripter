@@ -9,8 +9,11 @@
 require "ruby/openai"
 
 # Ex:
-#   ChatGPT.log_to_default_filepath
-#   ChatGPT.complete_code('Given a string argument in OCaml, return the string in reverse. Account for the null case.')
+  # ChatGPT.log_to_default_filepath
+  # ChatGPT.complete_code('Given a string argument in OCaml, return the string in reverse. Account for the null case.')
+  # sleep(1)
+  # ChatGPT.log_to_default_filepath
+  # ChatGPT.chat('How would you run micro-services in C++?')
 class ChatGPT
   class << self
     protected :new
@@ -101,6 +104,3 @@ class ChatGPT
     SEMANTIC_SIMILARITY_MODELS = %w[text-similarity-ada-001 text-similarity-babbage-001 text-similarity-curie-001 text-similarity-davinci-001]
   end
 end
-
-ChatGPT.log_to_default_filepath
-ChatGPT.chat('How would you run micro-services in C++? Specifically, what libraries exist for this, and what third-party tools from companies such as Azure or DigitalOcean exist which can serve this function?')
