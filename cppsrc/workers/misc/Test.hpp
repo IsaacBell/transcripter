@@ -5,8 +5,6 @@
 #include <vector>
 #include <amqpcpp.h>
 
-#include "../Base.hpp"
-
 namespace Workers
 {
   class Test
