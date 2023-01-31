@@ -8,12 +8,25 @@
 
 void executeResults(Json::Value &json)
 {
+  // todo - use the Task Queue for this
   for (const auto followup : json["followups"])
     switch (followup.substr(0, s.find(' '))) // 1st word in the string
     {
     case "email":
+      // Example input:
+      //   email jane.doe@example.com `I am a helper bot. You requested the following email be composed to aaliyah@example.com:\\n\\nExample message`
       Mail.send(followup);
       break;
+    case "jira":
+      // todo - get the actual values from the string
+      // Example Input:
+      //   jira X-PROJECT QNET-7 X-SUMMARY Do some dry-wall work. X-DESCRIPTION There are BATS in the walls!
+      Jira()
+          .setSummary("Summary")
+          .setDescription("Description")
+          .setProjectKey("ProjectKey")
+          .setIssueType("Epic")
+          .createTicket();
     default:
       break;
     }
@@ -56,16 +69,16 @@ std::string generateModifiedString(std::string_view &transcription)
   modifiedString.append(
       "IGNORE ALL PREVIOUS INSTRUCTIONS. DO NOT start your response with a summary or introduction. Follow exactly the format I provide below. ");
   modifiedString.append(
-      "Generate summaries, guidelines, deliverables, TODOS, followups, etc., categorized by speaker / team member:\n\n");
+      "I will provide captions from a meeting. Generate summaries, guidelines, deliverables, TODOS, followups, etc., categorized by speaker / team member:\n\n");
   modifiedString.append(
-      "Output them STRICTLY in the following JSON format, leaving an empty array to represent fields which are left blank:\n\n");
+      "Your response should be consumable by the JsonCpp lib. Use this exact JSON format, leaving an empty array to represent fields which are left blank:\n\n");
   modifiedString.append("{\n
       \"  summaries\":[\"example summary\"],
       \"  guidelines\":[\"Example Guideline 1\", \"Example Guideline 2\"],
       \"  deliverables\":[\"Example Deliverable 1\"],
       \"  todos\":[\"Example Todo 1\"],
       \"  speakers\":[\"John Doe<john.doe@example.com>\", \"Jane Doe<jane.doe@example.com>\"],
-      \"  followups\":[\"email jane.doe@example.com `I am a helper bot. You requested the following email be composed to aaliyah@example.com:\\n\\nExample message`\"],\n}");
+      \"  followups\":[\"email jane.doe@example.com `I am a helper bot. You requested the following email be composed to aaliyah@example.com:\\n\\nExample message`\", \"jira X-PROJECT QNET-7 X-SUMMARY Do some dry-wall work. X-DESCRIPTION There are BATS in the walls!\"],\n}\n\n");
 
   modifiedString.append(transcription);
   return modifiedString;
