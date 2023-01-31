@@ -1,7 +1,5 @@
 #include <amqpcpp.h>
 
-#include "../base.hpp"
-
 namespace Workers
 {
   class CreateJiraTicket
