@@ -26,17 +26,10 @@ namespace Workers
         tokens.push_back(token);
       }
 
-      int id = std::stoi(tokens[0]);
-      int n = std::stoi(tokens[1]);
+      // int id = std::stoi(tokens[0]);
+      // int n = std::stoi(tokens[1]);
 
-      std::cout << "Request id is " << id << " and n is " << n << "\n";
-
-      std::this_thread::sleep_for(std::chrono::milliseconds(200));
-
-      n = n * 2;
-
-      std::string response = std::to_string(id) + " " + std::to_string(n) + " | ";
-      std::cout << "Response is " << response << "\n";
+      // std::cout << "Request id is " << id << " and n is " << n << "\n";
 
       if (channel.ready())
       {

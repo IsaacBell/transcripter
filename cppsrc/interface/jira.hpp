@@ -15,7 +15,6 @@
       .setTicketKey("TEST-123")
       .createTicket();
   }
-
 */
 
 enum class JiraIssueType : char {

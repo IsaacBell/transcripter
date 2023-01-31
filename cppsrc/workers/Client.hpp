@@ -6,7 +6,7 @@
 
 namespace Workers
 {
-  template <template <class WorkPolicy>>
+  template <class WorkPolicy>
   class Client
   {
   public:
@@ -25,12 +25,10 @@ namespace Workers
       channel.declareQueue("ts-generic-response");
       channel.bindQueue("ts-exchange", "ts-generic-response", "generic-response");
       channel
-        .consume("ts-generic-request", AMQP::noack)
-        .onReceived(
-            [&channel](const AMQP::Message &message, uint64_t deliveryTag, bool redelivered)
-            {
-        WorkPolicy.execute(channel, message, deliveryTag, redelivered);}
-
+          .consume("ts-generic-request", AMQP::noack)
+          .onReceived(
+              [&channel](const AMQP::Message &message, uint64_t deliveryTag, bool redelivered)
+              { WorkPolicy.execute(channel, message, deliveryTag, redelivered); });
 
       handler.loop();
     }

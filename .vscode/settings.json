@@ -65,6 +65,8 @@
     "iomanip": "cpp",
     "regex": "cpp",
     "stack": "cpp",
-    "thread": "cpp"
+    "thread": "cpp",
+    "__tree": "cpp",
+    "map": "cpp"
   }
 }
