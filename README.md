@@ -29,6 +29,8 @@ Currently configuring a test suite and static analysis tools.
 
 ## THIRD PARTY LIBRARIES
 - [AWS Transcribe](https://aws.amazon.com/transcribe/)
+- [OpenAI](https://openai.com/)
+- [Jira](https://www.atlassian.com/)
 
 ## ENVIRONMENT VARIABLES
 
