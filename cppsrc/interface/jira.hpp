@@ -74,17 +74,42 @@ private:
   Poco::Net::HTTPCredentials auth_;
   const std::string baseUrl_ = "https://yourcompany.atlassian.net/rest/api/2/issue/";
 
-  const std::map<std::string, JiraIssueType> issueTypeMap = {
-    {"Task", JiraIssueType::Task},
-    {"Bug", JiraIssueType::Bug},
-    {"Epic", JiraIssueType::Epic},
-    {"Story", JiraIssueType::Story},
-    {"Improvement", JiraIssueType::Improvement},
-    {"New Feature", JiraIssueType::NewFeature},
-    {"Sub-task", JiraIssueType::Subtask},
-    {"Technical task", JiraIssueType::TechnicalTask},
-    {"Test", JiraIssueType::Test}
+  constexpr std::pair<std::string, std::string> ticket_info_map_data[] = {
+    {"X-ISSUE-TYPE", ""},
+    {"X-PROJECT", ""},
+    {"X-SUMMARY", ""},
+    {"X-DESCRIPTION", ""}
   };
+
+  constexpr std::map<std::string, std::string> ticket_info_map(ticket_info_map_data, std::end(ticket_info_map_data));
+
+  void extractTicketInfo(const std::string &input) {
+    std::string::size_type start = input.find("jira");
+    if (start == std::string::npos)
+        return;
+
+    std::string::size_type end = start + 4;
+    while (end < input.length()) {
+      start = input.find(" ", end);
+      if (start == std::string::npos)
+        break;
+
+      end = input.find(" ", start + 1);
+      if (end == std::string::npos)
+        break;
+
+      std::string key = input.substr(start + 1, end - start - 1);
+      auto iter = ticket_info_map.find(key);
+      if (iter != ticket_info_map.end()) {
+        start = end;
+        end = input.find(" ", start + 1);
+        if (end == std::string::npos)
+            end = input.length();
+
+        iter->second = input.substr(start + 1, end - start - 1);
+      }
+    }
+  }
 
   bool createTicketInternal()
   {

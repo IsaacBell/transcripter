@@ -28,8 +28,8 @@ You will need these env vars set:
 - OPENAI_ORGANIZATION_ID
 - AWS_TRANSCRIBE_AUTH_KEY
 - AWS_TRANSCRIBE_AUTH_SECRET
-- SMTP_SEVER_HOST (optional)
-- SMTP_SEVER_PORT (optional)
+- SMTP_SERVER_HOST (optional)
+- SMTP_SERVER_PORT (optional)
 
 # ChatGPT
 

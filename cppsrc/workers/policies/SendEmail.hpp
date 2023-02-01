@@ -16,7 +16,7 @@ namespace Workers
 
       if (sent && channel.ready())
       {
-        channel.publish("ts-exchange", "generic-response", response);
+        channel.publish("ts-exchange", "generic-response", "success");
       }
       else
       {
