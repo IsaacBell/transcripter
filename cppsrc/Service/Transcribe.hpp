@@ -3,7 +3,7 @@
 #include "json/json.h"
 
 #include "Mail.hpp"
-#include "interface/openai.hpp"
+#include "../API/OpenAI.hpp"
 
 void executeResults(Json::Value &json)
 {

@@ -1,6 +1,6 @@
 #include <amqpcpp.h>
 
-#include "../../Mail.hpp"
+#include "../../Service/Mail.hpp"
 
 namespace Workers
 {
