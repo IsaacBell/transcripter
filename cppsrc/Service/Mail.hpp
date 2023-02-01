@@ -35,7 +35,7 @@ private:
     for (const auto &recipient : attrs.recipients)
       message.addRecipient(Poco::Net::MailRecipient(Poco::Net::MailRecipient::PRIMARY_RECIPIENT, recipient));
 
-    Poco::Net::SMTPClientSession session(std::getenv("SMTP_SEVER_HOST") || "smtp.gmail.com ");
+    Poco::Net::SMTPClientSession session(std::getenv("SMTP_SERVER_HOST") || "smtp.gmail.com ");
 
     session.login();
     session.sendMessage(message);
