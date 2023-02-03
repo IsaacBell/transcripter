@@ -40,7 +40,7 @@ os.environ["SMTP_SERVER_HOST"] = smtp_server_host
 os.environ["SMTP_SERVER_PORT"] = smtp_server_port
 
 # Build the app
-target = env.Program("Transcriber")
+target = env.Program("Transcriber", ['main.cpp'])
 
 # Run the tests
 
