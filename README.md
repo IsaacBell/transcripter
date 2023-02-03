@@ -1,3 +1,5 @@
+<sub><sup>Note: if you're here to steal a copy of my ChatGPT-based dev tools, go to the devtools/ folder. A separate repo is coming soon.</sup></sub>
+
 # Transcripter
 
 Transcripter is an AI-powered SASS app which generates summaries, guidelines, deliverables, TODOS, followups, etc., categorized by speaker / team member, from video captions.
