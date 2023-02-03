@@ -1,6 +1,6 @@
 # Developer Toolkit
 
-These are productivity tools for day-to-day use.
+Productivity tools for day-to-day use.
 
 
 # ChatGPT
