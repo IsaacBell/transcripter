@@ -67,6 +67,8 @@
     "stack": "cpp",
     "thread": "cpp",
     "__tree": "cpp",
-    "map": "cpp"
+    "map": "cpp",
+    "numeric": "cpp",
+    "random": "cpp"
   }
 }

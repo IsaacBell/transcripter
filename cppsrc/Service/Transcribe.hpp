@@ -101,20 +101,19 @@ bool transcribe(const std::string &url)
   Json::Reader reader;
   Json::Value root;
 
-  std::string url = "https://example.com/sample.mp4";
   auto json = run(url);
 
   bool parseSuccess = reader.parse(json, root, false);
   if (parseSuccess)
   {
-    // Json::StyledWriter styledWriter;
-    Json::FastWriter fastWriter;
+    Json::StyledWriter styledWriter;
+    // Json::FastWriter fastWriter;
 
     Json::Value result = root["result"];
     result["url"] = url;
 
-    // cout << styledWriter.write(newValue) << "\n";
-    std::cout << fastWriter.write(newValue) << "\n";
+    std::cout << styledWriter.write(newValue) << "\n";
+    // std::cout << fastWriter.write(newValue) << "\n";
   }
 
   return parseSuccess;
