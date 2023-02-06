@@ -22,7 +22,7 @@ public:
   {
     auto attrs = extractEmailDetails(input);
     if (!attrs)
-      return;
+      return false;
     return sendEmail(*attrs);
   }
 
