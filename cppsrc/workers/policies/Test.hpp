@@ -7,13 +7,14 @@
 
 namespace Workers
 {
-  class Test
+  class Test : public WorkPolicy<Test>
   {
     void execute(
         const AMQP::Channel &channel,
         const AMQP::Message &message,
         uint64_t deliveryTag,
-        bool redeliveredtask_body)
+        bool redeliveredtask_body,
+        Test &worker)
     {
       std::cout << "[x] Received " << message.body() << "\n";
 
@@ -42,5 +43,5 @@ namespace Workers
                   << "\n";
       }
     };
-  }
+  };
 }; // namespace Workers

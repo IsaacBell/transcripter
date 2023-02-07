@@ -1,8 +1,10 @@
 #include <amqpcpp.h>
 
+#include "Client.hpp"
+
 namespace Workers
 {
-  class CreateJiraTicket
+  class CreateJiraTicket : WorkPolicy<CreateJiraTicket>
   {
   public:
     void execute(

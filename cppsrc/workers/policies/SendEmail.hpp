@@ -1,22 +1,24 @@
 #include <amqpcpp.h>
 
-#include "../../Service/Mail.hpp"
+#include "Client.hpp"
+#include "../Service/Mail.hpp"
 
 namespace Workers
 {
-  class SendEmail
+  class SendEmail : public WorkPolicy<SendEmail>
   {
+  public:
     void execute(
-        const AMQP::Channel &channel,
+        AMQP::Channel &channel,
         const AMQP::Message &message,
         uint64_t deliveryTag,
-        bool redeliveredtask_body)
+        bool redelivered)
     {
-      bool sent = Mail.send(message.body());
+      bool sent = Mail::send(message.body());
 
       if (sent && channel.ready())
       {
-        channel.publish("ts-exchange", "generic-response", "success");
+        channel.publish("ts-send-email", "generic-response", "success");
       }
       else
       {
@@ -25,5 +27,5 @@ namespace Workers
                   << "\n";
       }
     };
-  }
+  };
 }; // namespace Workers

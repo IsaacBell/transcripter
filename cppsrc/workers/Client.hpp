@@ -6,18 +6,30 @@
 #include "PocoHandler.hpp"
 #include "MessageBus.hpp"
 
+/*
+  Workers::Client<SendEmail> clientA;
+  clientA.run();
+
+  Workers::Client<CreateJiraTicket> clientB;
+  clientB.run();
+*/
+
 namespace Workers
 {
-  // template <class WorkPolicy>
-  class Client
+  template <typename Derived>
+  class ClientBase
   {
   public:
-    static Client& getInstance()
+    void execute(AMQP::Channel& channel, const AMQP::Message &message, uint64_t deliveryTag, bool redelivered)
     {
-      static Client instance;
-      return instance;
+      static_cast<Derived*>(this)->execute(channel, message, deliveryTag, redelivered);
     }
+  };
 
+  template <typename Derived>
+  class Client : public ClientBase<Derived>
+  {
+  public:
     void run()
     {
       if (!isRunning_)
@@ -25,21 +37,23 @@ namespace Workers
         auto bus = MessageBus::getInstance();
         bus->connect();
 
-        // TODO - add env var for login credentials
-        AMQP::Connection connection(&handler, AMQP::Login("guest", "guest"), "/");
+        AMQP::Connection connection(
+          &handler,
+          AMQP::Login(std::getenv("AMQP_USERNAME"), std::getenv("AMQP_PASSWORD")),
+          "/"
+        );
         AMQP::Channel channel(&connection);
 
         channel.onReady([&]()
-                        { std::cout << "Client is connected to the bus!" << std::endl; });
+                        { std::cout << "Client is connected to the bus!\n"; });
 
         channel.declareExchange(bus->exchange(), AMQP::direct);
         channel.declareQueue(bus->queue());
         channel.bindQueue(bus->exchange(), bus->queue(), "generic-response");
         channel
             .consume(bus->queue(), AMQP::noack)
-            .onReceived(
-                [&channel](const AMQP::Message &message, uint64_t deliveryTag, bool redelivered)
-                { WorkPolicy.execute(channel, message, deliveryTag, redelivered); });
+            .onReceived([this](const AMQP::Message &message, uint64_t deliveryTag, bool redelivered)
+                        { Derived::getInstance().execute(channel, message, deliveryTag, redelivered); });
 
         handler.loop();
         isRunning_ = true;
@@ -47,12 +61,23 @@ namespace Workers
     }
 
   private:
-    // Singleton
-    Client() = default;
-    Client(const Client&) = delete;
-    Client& operator=(const Client&) = delete;
-
     bool isRunning_ = false;
     Poco::Net::HTTPCredentials auth_;
+  };
+
+  class WorkPolicy : public Client<WorkPolicy>
+  {
+  public:
+    static WorkPolicy& getInstance()
+    {
+      static WorkPolicy instance;
+      return instance;
+    }
+
+    void execute(AMQP::Channel& channel, const AMQP::Message &message, uint64_t deliveryTag, bool redelivered)
+    {
+      // Implementation specific to this work policy
+      throw("Base WorkPolicy class shouldn't be called!")
+    }
   };
 }
