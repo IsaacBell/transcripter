@@ -12,7 +12,7 @@ struct EmailAttrs
   std::string body;
   std::string sender;
   std::string subject;
-  std::vector<std::string> recipients;
+  std::vector<std::string &> recipients;
 };
 
 class Mail
@@ -20,7 +20,7 @@ class Mail
 public:
   static bool send(const std::string &input)
   {
-    auto attrs = extractEmailDetails(input);
+    auto attrs = compose(input);
     if (!attrs)
       return false;
     return sendEmail(*attrs);
@@ -53,7 +53,7 @@ private:
     }
   }
 
-  static std::optional<EmailAttrs> extractEmailDetails(const std::string &input)
+  static std::optional<EmailAttrs> compose(const std::string &input)
   {
     std::string command;
     EmailAttrs attrs;
