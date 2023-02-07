@@ -4,6 +4,7 @@
 #include <memory>
 
 #include "PocoHandler.hpp"
+#include "MessageBus.hpp"
 
 namespace Workers
 {
@@ -21,26 +22,21 @@ namespace Workers
     {
       if (!isRunning_)
       {
-        PocoHandler handler("127.0.0.1", 5672);
+        auto bus = MessageBus::getInstance();
+        bus->connect();
 
         // TODO - add env var for login credentials
         AMQP::Connection connection(&handler, AMQP::Login("guest", "guest"), "/");
         AMQP::Channel channel(&connection);
 
         channel.onReady([&]()
-                        { std::cout << "Worker is ready!" << std::endl; });
+                        { std::cout << "Client is connected to the bus!" << std::endl; });
 
-        channel.declareExchange("ts-exchange", AMQP::direct);
-        channel.declareQueue("ts-generic-response");
-        channel.bindQueue("ts-exchange", "ts-generic-response", "generic-response");
+        channel.declareExchange(bus->exchange(), AMQP::direct);
+        channel.declareQueue(bus->queue());
+        channel.bindQueue(bus->exchange(), bus->queue(), "generic-response");
         channel
-            .consume("ts-email-send", AMQP::noack)
-            .onReceived(
-                [&channel](const AMQP::Message &message, uint64_t deliveryTag, bool redelivered)
-                { WorkPolicy.execute(channel, message, deliveryTag, redelivered); });
-
-        channel
-            .consume("ts-generic-request", AMQP::noack)
+            .consume(bus->queue(), AMQP::noack)
             .onReceived(
                 [&channel](const AMQP::Message &message, uint64_t deliveryTag, bool redelivered)
                 { WorkPolicy.execute(channel, message, deliveryTag, redelivered); });
