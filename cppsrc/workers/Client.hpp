@@ -49,11 +49,11 @@ namespace Workers
 
         channel.declareExchange(bus->exchange(), AMQP::direct);
         channel.declareQueue(bus->queue());
-        channel.bindQueue(bus->exchange(), bus->queue(), WorkPolicy::getInstance().routingKey());
+        channel.bindQueue(bus->exchange(), bus->queue(), WorkPolicy::routingKey);
         channel
             .consume(bus->queue(), AMQP::noack)
             .onReceived([this](const AMQP::Message &message, uint64_t deliveryTag, bool redelivered)
-                        { WorkPolicy::getInstance().execute(channel, message, deliveryTag, redelivered); });
+                        { WorkPolicy::execute(channel, message, deliveryTag, redelivered); });
 
         handler.loop();
         isRunning_ = true;
