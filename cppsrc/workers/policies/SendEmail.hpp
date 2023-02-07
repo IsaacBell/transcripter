@@ -8,7 +8,9 @@ namespace Workers
   class SendEmail : public WorkPolicy<SendEmail>
   {
   public:
-    void execute(
+    static const std::string routingKey = "ts-send-email";
+
+    static void execute(
         AMQP::Channel &channel,
         const AMQP::Message &message,
         uint64_t deliveryTag,
@@ -28,4 +30,5 @@ namespace Workers
       }
     };
   };
+
 }; // namespace Workers

@@ -7,7 +7,9 @@ namespace Workers
   class CreateJiraTicket : WorkPolicy<CreateJiraTicket>
   {
   public:
-    void execute(
+    static const std::string routingKey = "ts-create-jira-ticket";
+
+    static void execute(
         const AMQP::Channel &channel,
         const AMQP::Message &message,
         uint64_t deliveryTag,

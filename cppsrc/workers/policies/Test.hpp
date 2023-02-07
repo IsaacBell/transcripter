@@ -9,7 +9,9 @@ namespace Workers
 {
   class Test : public WorkPolicy<Test>
   {
-    void execute(
+    static const std::string routingKey = "ts-test*";
+
+    static void execute(
         const AMQP::Channel &channel,
         const AMQP::Message &message,
         uint64_t deliveryTag,
@@ -34,7 +36,7 @@ namespace Workers
 
       if (channel.ready())
       {
-        channel.publish("ts-exchange", "generic-response", response);
+        channel.publish("ts-exchange", "generic-response", ":::test response:::");
       }
       else
       {

@@ -16,18 +16,18 @@
 
 namespace Workers
 {
-  template <typename Derived>
+  template <typename WorkPolicy>
   class ClientBase
   {
   public:
     void execute(AMQP::Channel& channel, const AMQP::Message &message, uint64_t deliveryTag, bool redelivered)
     {
-      static_cast<Derived*>(this)->execute(channel, message, deliveryTag, redelivered);
+      static_cast<WorkPolicy*>(this)->execute(channel, message, deliveryTag, redelivered);
     }
   };
 
-  template <typename Derived>
-  class Client : public ClientBase<Derived>
+  template <typename WorkPolicy>
+  class Client : public ClientBase<WorkPolicy>
   {
   public:
     void run()
@@ -49,11 +49,11 @@ namespace Workers
 
         channel.declareExchange(bus->exchange(), AMQP::direct);
         channel.declareQueue(bus->queue());
-        channel.bindQueue(bus->exchange(), bus->queue(), "generic-response");
+        channel.bindQueue(bus->exchange(), bus->queue(), WorkPolicy::getInstance().routingKey());
         channel
             .consume(bus->queue(), AMQP::noack)
             .onReceived([this](const AMQP::Message &message, uint64_t deliveryTag, bool redelivered)
-                        { Derived::getInstance().execute(channel, message, deliveryTag, redelivered); });
+                        { WorkPolicy::getInstance().execute(channel, message, deliveryTag, redelivered); });
 
         handler.loop();
         isRunning_ = true;
