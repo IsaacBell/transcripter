@@ -4,8 +4,11 @@
 #include <memory>
 
 #include "PocoHandler.hpp"
+#include "policies/SendEmail.hpp"
+#include "policies/Test.hpp"
+#include "policies/jira/CreateTicket.hpp"
 
-namespace MessageBus
+namespace Workers
 {
   class MessageBus
   {
@@ -29,25 +32,42 @@ namespace MessageBus
         AMQP::Channel channel(&connection);
 
         channel.onReady([&]()
-                        { std::cout << "MessageBus is ready!" << std::endl; });
+                        { std::cout << "MessageBus is ready!"
+                                    << "\n"; });
 
-        channel.declareExchange("ts-exchange", AMQP::direct);
-        channel.declareQueue("ts-generic-response");
-        channel.bindQueue("ts-exchange", "ts-generic-response", "generic-response");
+        // Exchanges
+        channel.declareExchange("ts-default", AMQP::direct);
+
+        // Queues
+        channel.declareQueue("ts-email-queue");
+        channel.declareQueue("ts-jira-queue");
+        channel.declareQueue("ts-test-queue");
+
+        // bindQueue args: exchange, queue, routing key
+        channel.bindQueue("ts-email-exchange", "ts-email-queue", "ts-send-email");
         channel
-            .consume("ts-generic-request", AMQP::noack)
+            .consume("ts-send-email", AMQP::noack)
             .onReceived(
                 [&channel](const AMQP::Message &message, uint64_t deliveryTag, bool redelivered)
-                { workPolicy.execute(channel, message, deliveryTag, redelivered); });
+                { SendEmail::execute(channel, message, deliveryTag, redelivered); });
+
+        channel.bindQueue("ts-jira-exchange", "ts-jira-queue", "ts-create-jira-ticket");
+        channel
+            .consume("ts-create-jira-ticket", AMQP::noack)
+            .onReceived(
+                [&channel](const AMQP::Message &message, uint64_t deliveryTag, bool redelivered)
+                { CreateJiraTicket::execute(channel, message, deliveryTag, redelivered); });
+
+        channel.bindQueue("ts-default", "ts-test-queue", "ts-test*");
+        channel
+            .consume("ts-test", AMQP::noack)
+            .onReceived(
+                [&channel](const AMQP::Message &message, uint64_t deliveryTag, bool redelivered)
+                { Test::execute(channel, message, deliveryTag, redelivered); });
 
         handler.loop();
         isRunning_ = true;
       }
-    }
-
-    void setWorkPolicy(const WorkPolicy &policy)
-    {
-      workPolicy = policy;
     }
 
   private:

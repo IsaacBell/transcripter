@@ -31,3 +31,22 @@ namespace Workers
 }
 
 Note that all routing keys begin with "ts-".
+
+## Exchanges
+
+- `"ts-email-exchange"` for sending emails
+- `"ts-api-exchange"` for posting to an API
+- `"ts-jira-exchange"` for creating Jira tickets
+
+## Queues
+
+- "ts-email-queue"
+- "ts-jira-queue"
+- "ts-test-queue"
+
+
+## Routing Keys
+
+- "ts-send-email"
+- "ts-create-jira-ticket"
+- "ts-test"
