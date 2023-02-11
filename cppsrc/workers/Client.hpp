@@ -7,11 +7,7 @@
 #include "MessageBus.hpp"
 
 /*
-  Workers::Client<SendEmail> clientA;
-  clientA.run();
-
-  Workers::Client<CreateJiraTicket> clientB;
-  clientB.run();
+  Workers::Client<SendEmail>::getInstance().run();
 */
 
 namespace Workers
@@ -34,6 +30,7 @@ namespace Workers
     {
       if (!isRunning_)
       {
+        PocoHandler handler("127.0.0.1", 5672);
         auto bus = MessageBus::getInstance();
         bus->connect();
 
@@ -46,11 +43,11 @@ namespace Workers
         channel.onReady([&]() {
           spdlog::info("Client is connected to the bus!"); }
 
-        channel.declareExchange(bus->exchange(), AMQP::direct);
-        channel.declareQueue(bus->queue());
-        channel.bindQueue(bus->exchange(), bus->queue(), WorkPolicy::routingKey);
+        channel.declareExchange(WorkPolicy::Exchange(), AMQP::direct);
+        channel.declareQueue(WorkPolicy::Queue());
+        channel.bindQueue(WorkPolicy::Exchange(), WorkPolicy::Queue(), WorkPolicy::RoutingKey);
         channel
-            .consume(bus->queue(), AMQP::noack)
+            .consume(WorkPolicy::Queue(), AMQP::noack)
             .onReceived([this](const AMQP::Message &message, uint64_t deliveryTag, bool redelivered)
                         {
           WorkPolicy::execute(channel, message, deliveryTag, redelivered); });
@@ -58,6 +55,11 @@ namespace Workers
         handler.loop();
         isRunning_ = true;
       }
+    }
+
+    void publish(const std::string &message)
+    {
+      Workers::MessageBus::getInstance().publish(Exchange, RoutingKey, message);
     }
 
   private:
@@ -76,8 +78,7 @@ namespace Workers
 
     void execute(AMQP::Channel &channel, const AMQP::Message &message, uint64_t deliveryTag, bool redelivered)
     {
-      // Implementation specific to this work policy
-      throw("Base WorkPolicy class shouldn't be called!")
+      static_assert(false, "Base WorkPolicy class shouldn't be called!")
     }
   };
 }

@@ -1,11 +1,14 @@
 #include <string>
 
-#include "Service/Transcribe.hpp"
+#include "Engine/Engine.hpp"
 
 int main(int argc, _TCHAR *argv[])
 {
   std::string url = "https://example.com/sample.mp4";
-  Transcribe(url);
+
+  Transcriptor::Engine engine(url);
+  engine.start();
+  engine.runTestWorker();
 
   return 0;
 }

@@ -9,7 +9,9 @@ namespace Workers
 {
   class Test : public WorkPolicy<Test>
   {
-    static const std::string routingKey = "ts-test*";
+    static const std::string Queue = "ts-test-queue";
+    static const std::string RoutingKey = "ts-test*";
+    static const std::string Exchange = "ts-test-exchange";
 
     static void execute(
         const AMQP::Channel &channel,
@@ -18,20 +20,7 @@ namespace Workers
         bool redeliveredtask_body)
     {
       const std::string msg = message.body();
-      spdlog::debug("[x] Test Worker Received:{}", msg);
-
-      std::vector<std::string> tokens;
-      std::stringstream ss(msg);
-      std::string token;
-      while (std::getline(ss, token, ' '))
-      {
-        tokens.push_back(token);
-      }
-
-      // int id = std::stoi(tokens[0]);
-      // int n = std::stoi(tokens[1]);
-
-      // std::cout << "Request id is " << id << " and n is " << n << "\n";
+      spdlog::debug("[x] Test Worker Received:{}", msg.body());
 
       if (channel.ready())
       {

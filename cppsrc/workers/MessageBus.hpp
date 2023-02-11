@@ -6,17 +6,29 @@
 #include "PocoHandler.hpp"
 #include "policies/SendEmail.hpp"
 #include "policies/Test.hpp"
+#include "policies/TranscribeVideo.hpp"
 #include "policies/jira/CreateTicket.hpp"
+#include "policies/google/ScheduleGoogleMeeting.hpp"
 
 namespace Workers
 {
   class MessageBus
   {
   public:
+    std::unique_ptr<AMQP::Channel> channel_; // store the channel in a unique pointer
+
     static MessageBus &getInstance()
     {
       static MessageBus instance;
       return instance;
+    }
+
+    void publish(const std::string &exchange, const std::string &routingKey, const std::string &message)
+    {
+      AMQP::Envelope env{message};
+      env.setExchange(exchange);
+      env.setRoutingKey(routingKey);
+      channel_->publish(env);
     }
 
     void run()
@@ -29,38 +41,57 @@ namespace Workers
             &handler,
             AMQP::Login(std::getenv("AMQP_USERNAME"), std::getenv("AMQP_PASSWORD")),
             "/");
-        AMQP::Channel channel(&connection);
+        channel_ = std::make_unique<AMQP::Channel>(connection);
 
-        channel.onReady([&]()
-                        { spdlog::info("Client is connected to the bus!"); });
+        channel->onReady([&]()
+                         { spdlog::info("Client is connected to the bus!"); });
 
         // Exchanges
-        channel.declareExchange("ts-default", AMQP::direct);
+        channel->declareExchange(SendEmail::Exchange, AMQP::direct);
+        channel->declareExchange(CreateJiraTicket::Exchange, AMQP::direct);
+        channel->declareExchange(TranscribeVideo::Exchange, AMQP::direct);
+        channel->declareExchange(ScheduleGoogleMeeting::Exchange, AMQP::direct);
+        channel->declareExchange(Test::Exchange, AMQP::direct);
 
         // Queues
-        channel.declareQueue("ts-email-queue");
-        channel.declareQueue("ts-jira-queue");
-        channel.declareQueue("ts-test-queue");
+        channel->declareQueue(TranscribeVideo::Queue);
+        channel->declareQueue(SendEmail::Queue);
+        channel->declareQueue(CreateJiraTicket::Queue);
+        channel->declareQueue(ScheduleGoogleMeeting::Queue);
+        channel->declareQueue(Test::Queue);
 
-        // bindQueue args: exchange, queue, routing key
-        channel.bindQueue("ts-email-exchange", "ts-email-queue", "ts-send-email");
         channel
-            .consume("ts-send-email", AMQP::noack)
-            .onReceived(
+            ->bindQueue(ScheduleGoogleMeeting::Exchange, ScheduleGoogleMeeting::Queue, ScheduleGoogleMeeting::RoutingKey)
+            ->consume(ScheduleGoogleMeeting::RoutingKey, AMQP::noack)
+            ->onReceived(
+                [&channel](const AMQP::Message &message, uint64_t deliveryTag, bool redelivered)
+                { ScheduleGoogleMeeting::execute(channel, message, deliveryTag, redelivered); });
+
+        channel
+            ->bindQueue(SendEmail::Exchange, SendEmail::Queue, SendEmail::RoutingKey)
+            ->consume(SendEmail::RoutingKey, AMQP::noack)
+            ->onReceived(
                 [&channel](const AMQP::Message &message, uint64_t deliveryTag, bool redelivered)
                 { SendEmail::execute(channel, message, deliveryTag, redelivered); });
 
-        channel.bindQueue("ts-jira-exchange", "ts-jira-queue", "ts-create-jira-ticket");
         channel
-            .consume("ts-create-jira-ticket", AMQP::noack)
-            .onReceived(
+            ->bindQueue(CreateJiraTicket::Exchange, CreateJiraTicket::Queue, CreateJiraTicket::RoutingKey)
+            ->consume(CreateJiraTicket::RoutingKey, AMQP::noack)
+            ->onReceived(
                 [&channel](const AMQP::Message &message, uint64_t deliveryTag, bool redelivered)
                 { CreateJiraTicket::execute(channel, message, deliveryTag, redelivered); });
 
-        channel.bindQueue("ts-default", "ts-test-queue", "ts-test*");
         channel
-            .consume("ts-test", AMQP::noack)
-            .onReceived(
+            ->bindQueue(TranscribeVideo::Exchange, TranscribeVideo::Queue, TranscribeVideo::RoutingKey)
+            ->consume(TranscribeVideo::RoutingKey, AMQP::noack)
+            ->onReceived(
+                [&channel](const AMQP::Message &message, uint64_t deliveryTag, bool redelivered)
+                { TranscribeVideo::execute(channel, message, deliveryTag, redelivered); });
+
+        channel
+            ->bindQueue(Test::Exchange, Test::Queue, Test::RoutingKey)
+            ->consume(Test::RoutingKey, AMQP::noack)
+            ->onReceived(
                 [&channel](const AMQP::Message &message, uint64_t deliveryTag, bool redelivered)
                 { Test::execute(channel, message, deliveryTag, redelivered); });
 
@@ -76,6 +107,5 @@ namespace Workers
     MessageBus &operator=(const MessageBus &) = delete;
 
     bool isRunning_ = false;
-    WorkPolicy workPolicy;
   };
 }

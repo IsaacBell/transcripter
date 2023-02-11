@@ -14,7 +14,9 @@ namespace Workers
   class ScheduleGoogleMeeting : public WorkPolicy<ScheduleGoogleMeeting>
   {
   public:
-    static const std::string routingKey = "ts-google-schedule-meeting";
+    static const std::string RoutingKey = "ts-google-schedule-meeting";
+    static const std::string Queue = "ts-google-queue";
+    static const std::string Exchange = "ts-google-exchange";
 
     static void execute(
         const AMQP::Channel &channel,
@@ -22,28 +24,28 @@ namespace Workers
         uint64_t deliveryTag,
         bool redeliveredtask_body)
     {
-      // Code goes here...
+      if (message.body().size() < 11)
+      {
+        channel->reject(deliveryTag, false);
+        spdlog::info("GoogleSchedulingError::Message size too small, rejecting: {}", message.body());
+        return;
+      }
+
       Poco::URI uri("https://www.googleapis.com/calendar/v3/calendars/primary/events/quickAdd");
 
-      // Set the query parameters
-      uri.addQueryParameter("text", message.body());
+      uri.addQueryParameter("text", message.body().substr(10, message.body().size() - 1));
       uri.addQueryParameter("sendUpdates", "all");
 
-      // Create HTTP Request
       Poco::Net::HTTPRequest request(Poco::Net::HTTPRequest::HTTP_POST, uri.getPathAndQuery(), Poco::Net::HTTPMessage::HTTP_1_1);
 
-      // Define the rest of the request
       request.setContentType("application/x-www-form-urlencoded");
 
-      // Create a session and send the request
       Poco::Net::HTTPClientSession session;
       session.sendRequest(request);
 
-      // Receive the response
       Poco::Net::HTTPResponse response;
       std::istream &rs = session.receiveResponse(response);
 
-      // Handle response
       if (response.getStatus() == Poco::Net::HTTPResponse::HTTP_OK && channel.ready())
       {
         channel.ack(deliveryTag); // acknowledge the message as processed
