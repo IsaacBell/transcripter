@@ -15,12 +15,11 @@ namespace Workers
         const AMQP::Channel &channel,
         const AMQP::Message &message,
         uint64_t deliveryTag,
-        bool redeliveredtask_body,
-        Test &worker)
+        bool redeliveredtask_body)
     {
-      std::cout << "[x] Received " << message.body() << "\n";
+      const std::string msg = message.body();
+      spdlog::debug("[x] Test Worker Received:{}", msg);
 
-      std::string msg = message.body();
       std::vector<std::string> tokens;
       std::stringstream ss(msg);
       std::string token;
@@ -36,13 +35,13 @@ namespace Workers
 
       if (channel.ready())
       {
-        channel.publish("ts-exchange", "generic-response", ":::test response:::");
+        channel.ack(deliveryTag); // acknowledge the message as processed
       }
       else
       {
-        // TODO: re-queue the worker
-        std::cout << "Can't publish, channel unavailable"
-                  << "\n";
+        channel.reject(deliveryTag, false); // notify but don't re-queue test workers if failed
+        spdlog::error("AMQP::Can't publish, channel unavailable:{}:{}",
+                      channel.getPeerAddress(), channel.getPeerPort());
       }
     };
   };

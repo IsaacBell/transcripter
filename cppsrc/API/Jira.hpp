@@ -6,6 +6,8 @@
 #include <Poco/Net/HTTPClientSession.h>
 #include <Poco/URI.h>
 
+#include "spdlog/spdlog.h"
+
 /*
   auto jira = Jira()
       .setSummary("Summary")
@@ -17,7 +19,8 @@
   }
 */
 
-enum class JiraIssueType : char {
+enum class JiraIssueType : char
+{
   Task,
   Bug,
   Epic,
@@ -34,7 +37,7 @@ JiraIssueType issueType;
 class Jira
 {
 public:
-  Jira() : auth_(std::getenv("JIRA_USERNAME"), std::getenv("JIRA_PASSWORD")) { }
+  Jira() : auth_(std::getenv("JIRA_USERNAME"), std::getenv("JIRA_PASSWORD")) {}
 
   bool createTicket() { return createTicketInternal(); }
   bool checkTicket() { return ticketExists(); }
@@ -75,21 +78,22 @@ private:
   const std::string baseUrl_ = "https://yourcompany.atlassian.net/rest/api/2/issue/";
 
   constexpr std::pair<std::string, std::string> ticket_info_map_data[] = {
-    {"X-ISSUE-TYPE", ""},
-    {"X-PROJECT", ""},
-    {"X-SUMMARY", ""},
-    {"X-DESCRIPTION", ""}
-  };
+      {"X-ISSUE-TYPE", ""},
+      {"X-PROJECT", ""},
+      {"X-SUMMARY", ""},
+      {"X-DESCRIPTION", ""}};
 
   constexpr std::map<std::string, std::string> ticket_info_map(ticket_info_map_data, std::end(ticket_info_map_data));
 
-  void extractTicketInfo(const std::string &input) {
+  void extractTicketInfo(const std::string &input)
+  {
     std::string::size_type start = input.find("jira");
     if (start == std::string::npos)
-        return;
+      return;
 
     std::string::size_type end = start + 4;
-    while (end < input.length()) {
+    while (end < input.length())
+    {
       start = input.find(" ", end);
       if (start == std::string::npos)
         break;
@@ -100,11 +104,12 @@ private:
 
       std::string key = input.substr(start + 1, end - start - 1);
       auto iter = ticket_info_map.find(key);
-      if (iter != ticket_info_map.end()) {
+      if (iter != ticket_info_map.end())
+      {
         start = end;
         end = input.find(" ", start + 1);
         if (end == std::string::npos)
-            end = input.length();
+          end = input.length();
 
         iter->second = input.substr(start + 1, end - start - 1);
       }
@@ -152,12 +157,13 @@ private:
     }
     catch (Poco::Exception &e)
     {
-      std::cerr << e.what() << std::endl;
+      spdlog::error("JiraConnectionError: {}", e.what());
       return false;
     }
   }
 
-  bool isValidIssueType(const std::string &str) {
+  bool isValidIssueType(const std::string &str)
+  {
     static const auto it = issueTypeMap.find(str);
     return it != issueTypeMap.end();
   }

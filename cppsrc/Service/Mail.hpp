@@ -48,7 +48,7 @@ private:
     }
     catch (const Poco::Exception &ex)
     {
-      std::cerr << "Error sending email: " << ex.what() << '\n';
+      spdlog::error("MailSendError: {}", e.what());
       return false;
     }
   }

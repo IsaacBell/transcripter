@@ -32,8 +32,7 @@ namespace Workers
         AMQP::Channel channel(&connection);
 
         channel.onReady([&]()
-                        { std::cout << "MessageBus is ready!"
-                                    << "\n"; });
+                        { spdlog::info("Client is connected to the bus!"); });
 
         // Exchanges
         channel.declareExchange("ts-default", AMQP::direct);

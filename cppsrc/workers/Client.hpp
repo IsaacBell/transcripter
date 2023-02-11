@@ -20,9 +20,9 @@ namespace Workers
   class ClientBase
   {
   public:
-    void execute(AMQP::Channel& channel, const AMQP::Message &message, uint64_t deliveryTag, bool redelivered)
+    void execute(AMQP::Channel &channel, const AMQP::Message &message, uint64_t deliveryTag, bool redelivered)
     {
-      static_cast<WorkPolicy*>(this)->execute(channel, message, deliveryTag, redelivered);
+      static_cast<WorkPolicy *>(this)->execute(channel, message, deliveryTag, redelivered);
     }
   };
 
@@ -38,14 +38,13 @@ namespace Workers
         bus->connect();
 
         AMQP::Connection connection(
-          &handler,
-          AMQP::Login(std::getenv("AMQP_USERNAME"), std::getenv("AMQP_PASSWORD")),
-          "/"
-        );
+            &handler,
+            AMQP::Login(std::getenv("AMQP_USERNAME"), std::getenv("AMQP_PASSWORD")),
+            "/");
         AMQP::Channel channel(&connection);
 
-        channel.onReady([&]()
-                        { std::cout << "Client is connected to the bus!\n"; });
+        channel.onReady([&]() {
+          spdlog::info("Client is connected to the bus!"); }
 
         channel.declareExchange(bus->exchange(), AMQP::direct);
         channel.declareQueue(bus->queue());
@@ -53,7 +52,8 @@ namespace Workers
         channel
             .consume(bus->queue(), AMQP::noack)
             .onReceived([this](const AMQP::Message &message, uint64_t deliveryTag, bool redelivered)
-                        { WorkPolicy::execute(channel, message, deliveryTag, redelivered); });
+                        {
+          WorkPolicy::execute(channel, message, deliveryTag, redelivered); });
 
         handler.loop();
         isRunning_ = true;
@@ -68,13 +68,13 @@ namespace Workers
   class WorkPolicy : public Client<WorkPolicy>
   {
   public:
-    static WorkPolicy& getInstance()
+    static WorkPolicy &getInstance()
     {
       static WorkPolicy instance;
       return instance;
     }
 
-    void execute(AMQP::Channel& channel, const AMQP::Message &message, uint64_t deliveryTag, bool redelivered)
+    void execute(AMQP::Channel &channel, const AMQP::Message &message, uint64_t deliveryTag, bool redelivered)
     {
       // Implementation specific to this work policy
       throw("Base WorkPolicy class shouldn't be called!")

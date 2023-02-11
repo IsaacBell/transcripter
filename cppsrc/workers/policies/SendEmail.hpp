@@ -20,13 +20,13 @@ namespace Workers
 
       if (sent && channel.ready())
       {
-        channel.publish("ts-send-email", "generic-response", "success");
+        channel.ack(deliveryTag); // acknowledge the message as processed
       }
       else
       {
-        // TODO: re-queue the worker
-        std::cout << "Can't publish, channel unavailable"
-                  << "\n";
+        channel.nack(); // re-queue for later
+        spdlog::error("AMQP::Can't publish, channel unavailable:{}:{}",
+                      channel.getPeerAddress(), channel.getPeerPort());
       }
     };
   };

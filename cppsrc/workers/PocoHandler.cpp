@@ -14,9 +14,7 @@ namespace
   {
   public:
     Buffer(size_t size) : m_data(size, 0),
-                          m_use(0)
-    {
-    }
+                          m_use(0) {}
 
     size_t write(const char *data, size_t size)
     {
@@ -113,7 +111,9 @@ void PocoHandler::loop()
       }
       if (m_impl->socket.available() < 0)
       {
-        std::cerr << "SOME socket error!!!" << std::endl;
+        spdlog::error("SocketError: {}:{}",
+                      m_impl->socket.getPeerAddress(),
+                      m_impl->socket.getPeerPort());
       }
 
       if (m_impl->connection && m_impl->inputBuffer.available())
@@ -142,7 +142,7 @@ void PocoHandler::loop()
   }
   catch (const Poco::Exception &exc)
   {
-    std::cerr << "Poco exception " << exc.displayText();
+    spdlog::error("ConnectionError: {}", e.what());
   }
 }
 
@@ -176,12 +176,12 @@ void PocoHandler::onConnected(AMQP::Connection *connection)
 void PocoHandler::onError(
     AMQP::Connection *connection, const char *message)
 {
-  std::cerr << "AMQP error " << message << std::endl;
+  spdlog::error("AMQPConnectionError: {}", message);
 }
 
 void PocoHandler::onClosed(AMQP::Connection *connection)
 {
-  std::cout << "AMQP closed connection" << std::endl;
+  spdlog::error("ConnectionError: AMQP closed connection");
   m_impl->quit = true;
 }
 

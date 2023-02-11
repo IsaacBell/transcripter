@@ -112,7 +112,7 @@ bool transcribe(const std::string &url)
     Json::Value result = root["result"];
     result["url"] = url;
 
-    std::cout << styledWriter.write(newValue) << "\n";
+    spdlog::info(styledWriter.write(newValue));
     // std::cout << fastWriter.write(newValue) << "\n";
   }
 

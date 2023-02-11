@@ -6,6 +6,7 @@ WORKDIR /app
 RUN apt-get update && apt-get install -y \
   clang \
   libpoco-dev \
+  libspdlog-dev \
   libjsoncpp-dev \
   cmake \
   g++ \

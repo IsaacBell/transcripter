@@ -23,7 +23,8 @@ namespace Workers
       bool parsingSuccessful = reader.parse(msg, root);
       if (!parsingSuccessful)
       {
-        // Handle error
+        spdlog::error("JSONParseError::Failed to parse JIRA attrs:{}", msg);
+        channel.reject(deliveryTag, false); // discards the message
         return;
       }
 
@@ -59,7 +60,17 @@ namespace Workers
       Poco::JSON::Object::Ptr object = result.extract<Poco::JSON::Object::Ptr>();
       std::string ticket_key = object->get("key").convert<std::string>();
 
-      channel.ack(deliveryTag); // acknowledge the message as processed
+      if (response.getStatus() == Poco::Net::HTTPResponse::HTTP_OK && channel.ready())
+      {
+        channel.ack(deliveryTag); // acknowledge the message as processed
+        spdlog::info("JiraAPI::Ticket Created with key {}", ticket_key);
+      }
+      else
+      {
+        channel.nack(); // re-queue for later
+        spdlog::error("AMQP::Can't publish, channel unavailable:{}:{}",
+                      channel.getPeerAddress(), channel.getPeerPort());
+      }
     }
   };
 } // namespace Workers
