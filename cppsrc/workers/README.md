@@ -6,15 +6,15 @@ The [AMQP-CPP](https://github.com/CopernicaMarketingSoftware/AMQP-CPP) does the 
 
 To start a Client:
 
-```
+```cpp
 Workers::Client.run();
 ```
 
-# Creating Work Policies
+## Creating Work Policies
 
 All work policies should have a routing key and an execution strategy:
 
-```
+```cpp
 namespace Workers
 {
   class Test : public WorkPolicy<Test>
@@ -29,6 +29,7 @@ namespace Workers
         Test &worker) {}
   }
 }
+```
 
 Note that all routing keys begin with "ts-".
 
@@ -46,7 +47,6 @@ Note that all routing keys begin with "ts-".
 - "ts-test-queue"
 - "ts-google-queue"
 
-
 ## Routing Keys
 
 - "ts-send-email"
@@ -54,8 +54,7 @@ Note that all routing keys begin with "ts-".
 - "ts-google-schedule-meeting"
 - "ts-test"
 
-
-# Example input:
+## Example worker inputs
 
 email jane.doe@example.com `I am a helper bot. You requested the following email be composed to aaliyah@example.com:\\n\\nExample message`
 
