@@ -15,32 +15,29 @@ aws_transcribe_auth_key = os.environ.get("AWS_TRANSCRIBE_AUTH_KEY")
 aws_transcribe_auth_secret = os.environ.get("AWS_TRANSCRIBE_AUTH_SECRET")
 smtp_server_host = os.environ.get("SMTP_SERVER_HOST")
 smtp_server_port = os.environ.get("SMTP_SERVER_PORT")
-jira_username = os.environ.get("JIRA_USERNAME")
-jira_password = os.environ.get("JIRA_PASSWORD")
+jira_api_token = os.environ.get("JIRA_API_TOKEN")
 amqp_username = os.environ.get("AMQP_USERNAME")
 amqp_password = os.environ.get("AMQP_PASSWORD")
 
 # Check if the environment variables are set
 if not openai_api_key:
-    raise("OPENAI_API_KEY is not set")
+    raise ("OPENAI_API_KEY is not set")
 if not openai_organization_id:
-    raise("OPENAI_ORGANIZATION_ID is not set")
+    raise ("OPENAI_ORGANIZATION_ID is not set")
 if not aws_transcribe_auth_key:
-    raise("AWS_TRANSCRIBE_AUTH_KEY is not set")
+    raise ("AWS_TRANSCRIBE_AUTH_KEY is not set")
 if not aws_transcribe_auth_secret:
-    raise("AWS_TRANSCRIBE_AUTH_SECRET is not set")
+    raise ("AWS_TRANSCRIBE_AUTH_SECRET is not set")
 if not smtp_server_host:
-    raise("SMTP_SERVER_HOST is not set")
+    raise ("SMTP_SERVER_HOST is not set")
 if not smtp_server_port:
-    raise("SMTP_SERVER_PORT is not set")
-if not jira_username:
-    raise("JIRA_USERNAME is not set")
-if not jira_password:
-    raise("JIRA_PASSWORD is not set")
+    raise ("SMTP_SERVER_PORT is not set")
+if not jira_api_token:
+    raise ("JIRA_API_TOKEN is not set")
 if not amqp_username:
-    raise("AMQP_USERNAME is not set")
+    raise ("AMQP_USERNAME is not set")
 if not amqp_password:
-    raise("AMQP_PASSWORD is not set")
+    raise ("AMQP_PASSWORD is not set")
 
 
 # Add the environment variables
@@ -50,8 +47,7 @@ os.environ["AWS_TRANSCRIBE_AUTH_KEY"] = aws_transcribe_auth_key
 os.environ["AWS_TRANSCRIBE_AUTH_SECRET"] = aws_transcribe_auth_secret
 os.environ["SMTP_SERVER_HOST"] = smtp_server_host
 os.environ["SMTP_SERVER_PORT"] = smtp_server_port
-os.environ["JIRA_USERNAME"] = jira_username
-os.environ["JIRA_PASSWORD"] = jira_password
+os.environ["JIRA_API_TOKEN"] = jira_username
 os.environ["AMQP_USERNAME"] = amqp_username
 os.environ["AMQP_PASSWORD"] = amqp_password
 
