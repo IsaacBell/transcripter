@@ -46,6 +46,17 @@ namespace Workers
         channel->onReady([&]()
                          { spdlog::info("Client is connected to the bus!"); });
 
+        // Declare Client connections
+        channel->declareExchange("Clients", AMQP::fanout);
+        channel->declareQueue("Client1");
+        channel->declareQueue("Client2");
+        channel->bindQueue("Clients", "Client1", "");
+        channel->bindQueue("Clients", "Client2", "");
+        channel->consume("Client1", AMQP::noack)->onReceived([&channel](const AMQP::Message &message, uint64_t deliveryTag, bool redelivered)
+                                                             { processMessage(channel, message, deliveryTag, redelivered); });
+        channel->consume("Client2", AMQP::noack)->onReceived([&channel](const AMQP::Message &message, uint64_t deliveryTag, bool redelivered)
+                                                             { processMessage(channel, message, deliveryTag, redelivered); });
+
         // Exchanges
         channel->declareExchange(SendEmail::Exchange, AMQP::direct);
         channel->declareExchange(CreateJiraTicket::Exchange, AMQP::direct);

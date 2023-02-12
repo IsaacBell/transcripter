@@ -26,6 +26,26 @@ namespace Workers
   class Client : public ClientBase<WorkPolicy>
   {
   public:
+    void connect(const std::string client1 = "Client1", const std::string client2 = "Client2")
+    {
+      channel.consume(client1, AMQP::noack).onReceived([this](const AMQP::Message &message, uint64_t deliveryTag, bool redelivered)
+                                                       { onMessageReceived(message, deliveryTag, redelivered, client1); });
+      channel.consume(client2, AMQP::noack).onReceived([this](const AMQP::Message &message, uint64_t deliveryTag, bool redelivered)
+                                                       { onMessageReceived(message, deliveryTag, redelivered, client2); });
+      bus->connect();
+    }
+
+    void onMessageReceived(const AMQP::Message &message,
+                           uint64_t deliveryTag, bool redelivered, const std::string &client)
+    {
+      WorkPolicy::execute(message, deliveryTag, redelivered, client);
+    }
+
+    void publish(const std::string &message)
+    {
+      Workers::MessageBus::getInstance().publish(Exchange, RoutingKey, message);
+    }
+
     void run()
     {
       if (!isRunning_)
@@ -55,11 +75,6 @@ namespace Workers
         handler.loop();
         isRunning_ = true;
       }
-    }
-
-    void publish(const std::string &message)
-    {
-      Workers::MessageBus::getInstance().publish(Exchange, RoutingKey, message);
     }
 
   private:
