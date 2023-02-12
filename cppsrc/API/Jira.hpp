@@ -37,7 +37,7 @@ JiraIssueType issueType;
 class Jira
 {
 public:
-  Jira() : auth_(std::getenv("JIRA_USERNAME"), std::getenv("JIRA_PASSWORD")) {}
+  Jira() : credentials_(std::getenv("JIRA_API_TOKEN"), "") {}
 
   bool createTicket() { return createTicketInternal(); }
   bool checkTicket() { return ticketExists(); }
@@ -65,16 +65,18 @@ public:
   };
   Jira &setIssueType(std::string &issueType)
   {
-    issue_type_ = issueType;
+    issueType_ = issueType;
     return *this;
   };
 
 private:
   std::string summary_;
-  std::string description_;
+  std::string issueType_;
   std::string projectKey_;
   std::string ticketKey_;
-  Poco::Net::HTTPCredentials auth_;
+  std::string description_;
+
+  Poco::Net::HTTPCredentials credentials_;
   const std::string baseUrl_ = "https://yourcompany.atlassian.net/rest/api/2/issue/";
 
   constexpr std::pair<std::string, std::string> ticket_info_map_data[] = {
@@ -85,7 +87,7 @@ private:
 
   constexpr std::map<std::string, std::string> ticket_info_map(ticket_info_map_data, std::end(ticket_info_map_data));
 
-  void extractTicketInfo(const std::string &input)
+  void extractTicketInfo(const std::string &input) const
   {
     std::string::size_type start = input.find("jira");
     if (start == std::string::npos)
@@ -122,11 +124,11 @@ private:
     // TODO - need to close the session on delete?
     Poco::Net::HTTPClientSession session(uri.getHost(), uri.getPort());
     Poco::Net::HTTPRequest request(Poco::Net::HTTPRequest::HTTP_POST, uri.getPathAndQuery(), Poco::Net::HTTPMessage::HTTP_1_1);
+    request.setCredentials(credentials_);
     request.setContentType("application/json");
 
-    request.setCredentials(auth_);
-
-    std::string body = "{\"fields\": {\"project\": {\"key\": \"" + projectKey_ + "\"},\"summary\": \"" + summary_ + "\",\"description\": \"" + description_ + "\",\"issuetype\": {\"name\": \"Task\"}}}";
+    std::string body =
+        "{\"fields\": {\"project\": {\"key\": \"" + projectKey_ + "\"},\"summary\": \"" + summary_ + "\",\"description\": \"" + description_ + "\",\"issuetype\": {\"name\": \"" + issueType + "\"}}}";
     request.setContentLength(body.length());
     std::ostream &request_stream = session.sendRequest(request);
     request_stream << body;
@@ -146,14 +148,14 @@ private:
       Poco::Net::HTTPClientSession session(uri.getHost(), uri.getPort());
       Poco::Net::HTTPRequest request(Poco::Net::HTTPRequest::HTTP_GET, uri.getPathAndQuery(), Poco::Net::HTTPMessage::HTTP_1_1);
 
-      Poco::request.setCredentials(auth_);
+      Poco::request.setCredentials(credentials_);
 
       session.sendRequest(request);
 
       Poco::Net::HTTPResponse response;
       std::istream &response_stream = session.receiveResponse(response);
 
-      return response.getStatus() == Poco::Net::HTTPResponse::HTTP_OK;
+      return response.getStatus() == Poco::Net::HTTPResponse::HTTP_OK || Poco::Net::HTTPResponse::HTTP_CREATED;
     }
     catch (Poco::Exception &e)
     {
@@ -162,7 +164,7 @@ private:
     }
   }
 
-  bool isValidIssueType(const std::string &str)
+  bool isValidIssueType(const std::string &str) const noexcept
   {
     static const auto it = issueTypeMap.find(str);
     return it != issueTypeMap.end();
