@@ -56,8 +56,10 @@ Note that all routing keys begin with "ts-".
 
 ## Example worker inputs
 
+```text
 email jane.doe@example.com `I am a helper bot. You requested the following email be composed to aaliyah@example.com:\\n\\nExample message`
 
 jira X-PROJECT QNET-7 X-SUMMARY Do some dry-wall work. X-DESCRIPTION There are BATS in the walls!
 
 schedule `Q2 Planning Meeting`
+```
