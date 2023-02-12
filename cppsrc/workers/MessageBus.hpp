@@ -23,6 +23,8 @@ namespace Workers
       return instance;
     }
 
+    bool isRunning() { return isRunning_; }
+
     void publish(const std::string &exchange, const std::string &routingKey, const std::string &message)
     {
       AMQP::Envelope env{message};

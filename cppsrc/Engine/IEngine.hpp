@@ -10,10 +10,16 @@ namespace Transcripter
 {
   class IEngine
   {
-    // using ClientPool = std::vector<std::unique_ptr<Workers::Client>>;
+    using ClientPool = std::vector<std::unique_ptr<Workers::Client>>;
 
   public:
-    IEngine()
+    ClientPool clients_;
+
+    IEngine() : clients_({Workers::Client<Test>::getInstance(),
+                          Workers::Client<SendEmail>::getInstance(),
+                          Workers::Client<TranscribeVideo>::getInstance(),
+                          Workers::Client<CreateJiraTicket>::getInstance(),
+                          Workers::Client<ScheduleGoogleMeeting>::getInstance()})
     {
       configureClients();
     }
@@ -27,11 +33,8 @@ namespace Transcripter
     void configureClients()
     {
       // connect to the MessageBus, automatically consume messages from the queue
-      Workers::Client<Test>::getInstance().run();
-      Workers::Client<SendEmail>::getInstance().run();
-      Workers::Client<TranscribeVideo>::getInstance().run();
-      Workers::Client<CreateJiraTicket>::getInstance().run();
-      Workers::Client<ScheduleGoogleMeeting>::getInstance().run();
+      for (const auto &client : clients_)
+        client->run();
     }
   };
 }
