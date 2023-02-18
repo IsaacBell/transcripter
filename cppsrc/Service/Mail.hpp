@@ -1,7 +1,8 @@
 #include <iostream>
-#include <vector>
+#include <span>
 #include <string>
 #include <regex>
+#include <format>
 
 #include <Poco/Net/MailMessage.h>
 #include <Poco/Net/SMTPClientSession.h>
@@ -9,19 +10,32 @@
 
 struct EmailAttrs
 {
-  std::string body;
-  std::string sender;
-  std::string subject;
-  std::vector<std::string &> recipients;
+public:
+  std::string_view body;
+  std::string_view sender;
+  std::string_view subject;
+  std::span<std::string_view> recipients;
+
+  bool hasValue() const
+  {
+    return !body.empty() && !sender.empty() && !subject.empty() && !recipients.empty();
+  }
+  ,
 };
+
+/*
+  std::string_view input = "email from:sender@example.com subject:Test email This is a test email to:recipient1@example.com, recipient2@example.com";
+
+  Mail::send(input);
+*/
 
 class Mail
 {
 public:
-  static bool send(const std::string &input)
+  static bool send(const std::string_view input)
   {
     auto attrs = compose(input);
-    if (!attrs)
+    if (!attrs.hasValue())
       return false;
     return sendEmail(*attrs);
   }
@@ -32,14 +46,14 @@ private:
     try
     {
       Poco::Net::MailMessage message;
-      message.setSender(attrs.sender);
-      message.setSubject(attrs.subject);
-      message.setContent(attrs.body);
+      message.setSender(attrs.sender.data());
+      message.setSubject(attrs.subject.data());
+      message.setContent(attrs.body.data());
 
-      for (const auto &recipient : attrs.recipients)
-        message.addRecipient(Poco::Net::MailRecipient(Poco::Net::MailRecipient::PRIMARY_RECIPIENT, recipient));
+      message.clearRecipients();
+      message.addRecipients(attrs.recipients.data(), attrs.recipients.size());
 
-      Poco::Net::SMTPClientSession session(std::getenv("SMTP_SERVER_HOST") || "smtp.gmail.com ");
+      Poco::Net::SMTPClientSession session(std::getenv("SMTP_SERVER_HOST") ?: "smtp.gmail.com");
 
       session.login();
       session.sendMessage(message);
@@ -48,52 +62,56 @@ private:
     }
     catch (const Poco::Exception &ex)
     {
-      spdlog::error("MailSendError: {}", e.what());
+      std::cerr << std::format("MailSendError: {}", ex.displayText()) << '\n';
       return false;
     }
   }
 
-  static std::optional<EmailAttrs> compose(const std::string &input)
+  static std::optional<EmailAttrs> compose(const std::string_view &input)
   {
-    std::string command;
+    std::string_view command;
     EmailAttrs attrs;
 
     // extract the first word of the string
-    std::regex wordRegex("[^\s]+");
-    if (const auto &[wordIter, wordEnd] = std::regex_search(input, wordRegex); wordIter != wordEnd)
+    const std::regex wordRegex("[^\\s]+");
+    std::smatch wordMatch;
+    if (std::regex_search(input, wordMatch, wordRegex))
     {
-      const auto &[wordMatch, wordMatchEnd] = *wordIter;
-      command = std::string(wordMatch, wordMatchEnd);
+      command = wordMatch.str();
     }
 
     if (command != "email")
-      return {};
+    {
+      std::cerr << std::format("Invalid command: {}", command) << '\n';
+      return std::nullopt;
+    }
 
     // extract sender's email
-    const std::regex emailRegex("[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}");
-    if (const auto &[emailIter, emailEnd] = std::regex_search(input, emailRegex); emailIter != emailEnd)
+    const std::regex emailRegex("[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\\.[a-zA-Z]{2,}");
+    std::smatch emailMatch;
+    if (std::regex_search(input, emailMatch, emailRegex))
     {
-      const auto &[emailMatch, emailMatchEnd] = *emailIter;
-      attrs.sender = std::string(emailMatch, emailMatchEnd);
+      attrs.sender = emailMatch.str();
     }
 
     // extract email body
-    std::size_t tickPos = input.find("`");
-    attrs.body = input.substr(tickPos + 1, input.length() - tickPos - 2);
+    const auto tickPos = input.find('`');
+    attrs.body = input.substr(tickPos + 1).remove_prefix(1);
+    attrs.body = attrs.body.substr(0, attrs.body.find('`'));
 
     // recipients
-    const std::regex recipientsRegex("(?:[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}(?:,\s*)?)+");
+    const std::regex recipientsRegex("(?:[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\\.[a-zA-Z]{2,}(?:,\\s*)?)+");
     std::sregex_iterator recipientsIter(input.begin(), input.end(), recipientsRegex);
     std::sregex_iterator recipientsEnd;
     for (; recipientsIter != recipientsEnd; ++recipientsIter)
     {
-      const auto &[recipientMatch, recipientMatchEnd] = *recipientsIter;
-      attrs.recipients.emplace_back(recipientMatch, recipientMatchEnd);
+      const auto &recipientMatch = *recipientsIter;
+      attrs.recipients.emplace_back(recipientMatch.str());
     }
 
     // extract subject
-    std::size_t startPos = input.find("subject:") + 8;
-    std::size_t endPos = input.find("`", startPos);
+    const auto startPos = input.find("subject:") + 8;
+    const auto endPos = input.find('`', startPos);
     attrs.subject = input.substr(startPos, endPos - startPos);
 
     return attrs;

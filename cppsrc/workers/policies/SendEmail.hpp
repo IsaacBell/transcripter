@@ -21,16 +21,13 @@ namespace Workers
       bool sent = Mail::send(message.body());
 
       if (sent && channel.ready())
-      {
         channel.ack(deliveryTag); // acknowledge the message as processed
-      }
       else
       {
-        channel.nack(); // re-queue for later
+        channel.nack(deliveryTag); // re-queue for later
         spdlog::error("AMQP::Can't publish, channel unavailable:{}:{}",
                       channel.getPeerAddress(), channel.getPeerPort());
       }
     };
   };
-
 }; // namespace Workers

@@ -55,7 +55,7 @@ namespace Workers
                       channel.getPeerAddress(), channel.getPeerPort());
       else
       {
-        channel.nack(); // re-queue for later
+        channel.nack(deliveryTag); // re-queue for later
         spdlog::error("GoogleAPIScheduleMeetingError::Status: {}, Body: {}", response.getStatus(), response.getBody());
       }
     };

@@ -28,9 +28,7 @@ namespace Workers
         channel.ack(deliveryTag); // acknowledge the message as processed
       }
       else if (!channel.ready())
-      {
-        channel.nack(); // re-queue for later
-      }
+        channel.nack(deliveryTag); // re-queue for later
       else
       {
         channel.reject(delivery, false); // drop from bus
@@ -40,7 +38,7 @@ namespace Workers
 
   private:
     // Call AWS Transcribe API to record transcripts from given mp4
-    std::string transcribeVideo(const std::string &url)
+    std::string_view transcribeVideo(const std::string_view &url)
     {
       Poco::Net::HTTPCredentials auth(std::getenv("AWS_TRANSCRIBE_AUTH_KEY"), std::getenv("AWS_TRANSCRIBE_AUTH_SECRET"));
 
@@ -70,9 +68,9 @@ namespace Workers
     }
 
     // Transform string into input for OpenAI
-    const std::string generateModifiedString(const std::string &transcription) const noexcept
+    const std::string_view generateModifiedString(const std::string_view &transcription) const noexcept
     {
-      std::string modifiedString;
+      std::string modifiedString = "";
       modifiedString.append(
           "IGNORE ALL PREVIOUS INSTRUCTIONS. DO NOT start your response with a summary or introduction. Follow exactly the format I provide below. ");
       modifiedString.append(
@@ -92,12 +90,12 @@ namespace Workers
     }
 
     // Send the transformed input to OpenAI
-    std::string callOpenAiApi(std::string &transcription)
+    std::string_view callOpenAiApi(std::string_view &transcription)
     {
       return OpenAI.get(transcription);
     }
 
-    std::string run(std::string &url)
+    std::string_view run(std::string_view &url)
     {
       if (!url)
         return "";
@@ -112,12 +110,14 @@ namespace Workers
         case "email":
           // Example input:
           //   email jane.doe@example.com `I am a helper bot. You requested the following email be composed to aaliyah@example.com:\\n\\nExample message`
+
           Client<SendEmail>::getInstance().publish(followup);
           spdlog::info("TranscribeVideo::Email - message xenqueued");
           break;
         case "jira":
           // Example Input:
           //   jira X-PROJECT QNET-7 X-SUMMARY Do some dry-wall work. X-DESCRIPTION There are BATS in the walls!
+
           Client<CreateJiraTicket>::getInstance().publish(followup);
           spdlog::info("TranscribeVideo::Jira - Ticket enqueued");
         case "schedule":

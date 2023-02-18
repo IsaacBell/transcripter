@@ -7,16 +7,20 @@
 #include "MessageBus.hpp"
 
 /*
+  Usage:
+
   Workers::Client<SendEmail>::getInstance().run();
 */
 
 namespace Workers
 {
   template <typename WorkPolicy>
+    requires std::is_base_of_v<ClientBase<WorkPolicy>, WorkPolicy> &&
+             std::is_invocable_v<decltype(WorkPolicy::execute), AMQP::Channel &, const AMQP::Message &, uint64_t, bool>
   class ClientBase
   {
   public:
-    void execute(AMQP::Channel &channel, const AMQP::Message &message, uint64_t deliveryTag, bool redelivered)
+    static void execute(AMQP::Channel &channel, const AMQP::Message &message, uint64_t deliveryTag, bool redelivered) const
     {
       static_cast<WorkPolicy *>(this)->execute(channel, message, deliveryTag, redelivered);
     }
@@ -26,7 +30,7 @@ namespace Workers
   class Client : public ClientBase<WorkPolicy>
   {
   public:
-    void connect(const std::string client1 = "Client1", const std::string client2 = "Client2")
+    void connect(const std::string client1 = "Client1", const std::string client2 = "Client2") const
     {
       channel.consume(client1, AMQP::noack).onReceived([this](const AMQP::Message &message, uint64_t deliveryTag, bool redelivered)
                                                        { onMessageReceived(message, deliveryTag, redelivered, client1); });
@@ -36,12 +40,12 @@ namespace Workers
     }
 
     void onMessageReceived(const AMQP::Message &message,
-                           uint64_t deliveryTag, bool redelivered, const std::string &client)
+                           uint64_t deliveryTag, bool redelivered, const std::string &client) const
     {
       WorkPolicy::execute(message, deliveryTag, redelivered, client);
     }
 
-    void publish(const std::string &message)
+    void publish(const std::string &message) const
     {
       Workers::MessageBus::getInstance().publish(Exchange, RoutingKey, message);
     }
@@ -91,7 +95,7 @@ namespace Workers
       return instance;
     }
 
-    void execute(AMQP::Channel &channel, const AMQP::Message &message, uint64_t deliveryTag, bool redelivered)
+    static void execute(AMQP::Channel &channel, const AMQP::Message &message, uint64_t deliveryTag, bool redelivered)
     {
       static_assert(false, "Base WorkPolicy class shouldn't be called!")
     }

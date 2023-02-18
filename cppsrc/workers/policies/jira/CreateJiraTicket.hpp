@@ -69,7 +69,7 @@ namespace Workers
       }
       else
       {
-        channel.nack(); // re-queue for later
+        channel.nack(deliveryTag); // re-queue for later
         spdlog::error("AMQP::Can't publish, channel unavailable:{}:{}",
                       channel.getPeerAddress(), channel.getPeerPort());
       }
